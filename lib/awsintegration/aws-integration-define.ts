@@ -36,7 +36,8 @@ export function defineAwsIntegration(table : Table, role : Role) : Integrations 
               Item: {
                 id: { S: "$input.path('$.id')" },
                 // Add other attributes here based on your table schema
-                attributeName: { S: "$input.path('$.attributeName')" },
+                email: { S: "$input.path('$.email')" },
+                password: { S: "$input.path('$.password')" },
               },
             }),
           },

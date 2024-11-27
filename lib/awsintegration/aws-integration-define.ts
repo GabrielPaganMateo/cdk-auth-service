@@ -48,12 +48,50 @@ export function defineAwsIntegration(table : Table, role : Role) : Integrations 
           ],
         },
       });
+
+      const getUserByEmailIntegration = new AwsIntegration({
+        service: 'dynamodb',
+        action: 'Query',
+        integrationHttpMethod: 'POST',
+        options: {
+          credentialsRole : role,
+          requestTemplates: {
+            // Map the incoming request to DynamoDB's Query operation
+            'application/json': JSON.stringify({
+              TableName: table.tableName,
+              IndexName: 'emailIndex',
+              KeyConditionExpression: 'email = :email',
+              ExpressionAttributeValues: {
+                ':email': {
+                  S: "$input.path('$.email')",
+                },
+              },
+            }),
+          },
+          integrationResponses: [
+            {
+              statusCode: '200',
+              responseTemplates: {
+                // Extract a boolean from the response
+                'application/json': `
+                  #set($isRegistered = ($input.path('$.Count') > 0))
+                  {
+                    "isRegistered" : $isRegistered
+                  }  
+                `
+              },
+            }
+          ]
+
+      }
+    })
   
-      return {getIntegration, putIntegration};
+      return {getIntegration, putIntegration, getUserByEmailIntegration};
     
 }
 
 export interface Integrations {
     getIntegration : AwsIntegration;
     putIntegration : AwsIntegration;
+    getUserByEmailIntegration : AwsIntegration;
 }

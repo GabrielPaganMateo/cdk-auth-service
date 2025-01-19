@@ -44,7 +44,24 @@ export function defineAwsIntegration(table : Table, role : Role) : Integrations 
           integrationResponses: [
             {
               statusCode: '200',
+              responseTemplates : {
+                'application/json' : `"message" : "User Created".`
+              }
             },
+            {
+              selectionPattern : '4\\d{2}',
+              statusCode : '400',
+              responseTemplates : {
+                'application/json' : `"message" : "Client Request Error"`
+              }
+            },
+            {
+              selectionPattern : '5\\d{2}',
+              statusCode : '500',
+              responseTemplates : {
+                'application/json' : `"message" : "Server Response Error"`
+              }
+            }
           ],
         },
       });

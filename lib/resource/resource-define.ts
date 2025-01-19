@@ -12,7 +12,7 @@ export function defineResource(api : RestApi, integrations : Integrations) : voi
     });
   
     userResource.addMethod('POST', integrations.putIntegration, {
-      methodResponses: [{ statusCode: '200' }],
+      methodResponses: [{ statusCode: '200' }, {statusCode : '400'}, {statusCode : '500'}],
     });
 
     const emailResource = userResource.addResource('email')

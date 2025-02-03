@@ -19,12 +19,33 @@ export function defineAwsIntegration(table : Table, role : Role) : Integrations 
           integrationResponses: [
             {
               statusCode: '200',
+              responseTemplates : {
+                'application/json': JSON.stringify({
+                  id:"$input.path('$.Item.id.S')",
+                  email: "$input.path('$.Item.email.S')",
+                  verified : "$input.path('$.Item.verified.S')"
+                })
+              }
             },
+            {
+              selectionPattern : '4\\d{2}',
+              statusCode : '400',
+              responseTemplates : {
+                'application/json' : `"message" : "Client Request Error"`
+              }
+            },
+            {
+              selectionPattern : '5\\d{2}',
+              statusCode : '500',
+              responseTemplates : {
+                'application/json' : `"message" : "Server Response Error"`
+              }
+            }
           ],
         },
       });
 
-    
+      // NEED ANOTHER PUTINTEGRATION BUT WILL ONLY CHANGE VERIFIED VALUE AND NOTHING ELSE
       const putIntegration = new AwsIntegration({
         service: 'dynamodb',
         action: 'PutItem',
@@ -38,6 +59,7 @@ export function defineAwsIntegration(table : Table, role : Role) : Integrations 
                 // Add other attributes here based on your table schema
                 email: { S: "$input.path('$.email')" },
                 password: { S: "$input.path('$.password')" },
+                verified : { S : "$input.path('$.verified')" }
               },
             }),
           },
@@ -102,8 +124,46 @@ export function defineAwsIntegration(table : Table, role : Role) : Integrations 
 
       }
     })
+
+          const putVerifyStatusIntegration = new AwsIntegration({
+            service: 'dynamodb',
+            action: 'PutItem',
+            options: {
+              credentialsRole: role,
+              requestTemplates: {
+                'application/json': JSON.stringify({
+                  TableName: table.tableName,
+                  Item: {
+                    verified : { S : "$input.path('$.verified')" }
+                  },
+                }),
+              },
+              integrationResponses: [
+                {
+                  statusCode: '200',
+                  responseTemplates : {
+                    'application/json' : `"message" : "User Verification Status Changed".`
+                  }
+                },
+                {
+                  selectionPattern : '4\\d{2}',
+                  statusCode : '400',
+                  responseTemplates : {
+                    'application/json' : `"message" : "Client Request Error"`
+                  }
+                },
+                {
+                  selectionPattern : '5\\d{2}',
+                  statusCode : '500',
+                  responseTemplates : {
+                    'application/json' : `"message" : "Server Response Error"`
+                  }
+                }
+              ],
+            },
+          });
   
-      return {getIntegration, putIntegration, getUserByEmailIntegration};
+      return {getIntegration, putIntegration, getUserByEmailIntegration, putVerifyStatusIntegration};
     
 }
 
@@ -111,4 +171,5 @@ export interface Integrations {
     getIntegration : AwsIntegration;
     putIntegration : AwsIntegration;
     getUserByEmailIntegration : AwsIntegration;
+    putVerifyStatusIntegration : AwsIntegration;
 }
